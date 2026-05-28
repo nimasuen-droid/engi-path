@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
+import { InteractionFeedback } from "@/components/InteractionFeedback";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -73,7 +74,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Pipeline Design & Compliance Assistant" },
-      { name: "description", content: "Engineering-grade environment for pipeline design, code compliance, workflow, integrity management, and competency development." },
+      {
+        name: "description",
+        content:
+          "Engineering-grade environment for pipeline design, code compliance, workflow, integrity management, and competency development.",
+      },
       { name: "author", content: "PDCA" },
       { property: "og:title", content: "Pipeline Design & Compliance Assistant" },
       { property: "og:description", content: "Local-first pipeline engineering platform." },
@@ -83,7 +88,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
     ],
   }),
@@ -112,6 +120,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <InteractionFeedback />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
