@@ -13,10 +13,16 @@ import { Route as TrainingRouteImport } from './routes/training'
 import { Route as EngineerRouteImport } from './routes/engineer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EngineerIndexRouteImport } from './routes/engineer.index'
+import { Route as EngineerWorkflowRouteImport } from './routes/engineer.workflow'
+import { Route as EngineerReviewRouteImport } from './routes/engineer.review'
+import { Route as EngineerReportsRouteImport } from './routes/engineer.reports'
 import { Route as EngineerProjectsRouteImport } from './routes/engineer.projects'
+import { Route as EngineerIntegrityRouteImport } from './routes/engineer.integrity'
 import { Route as EngineerComplianceRouteImport } from './routes/engineer.compliance'
+import { Route as EngineerCodesRouteImport } from './routes/engineer.codes'
 import { Route as EngineerCalculationsRouteImport } from './routes/engineer.calculations'
 import { Route as EngineerBasisRouteImport } from './routes/engineer.basis'
+import { Route as EngineerAuditRouteImport } from './routes/engineer.audit'
 
 const TrainingRoute = TrainingRouteImport.update({
   id: '/training',
@@ -38,14 +44,39 @@ const EngineerIndexRoute = EngineerIndexRouteImport.update({
   path: '/',
   getParentRoute: () => EngineerRoute,
 } as any)
+const EngineerWorkflowRoute = EngineerWorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
+  getParentRoute: () => EngineerRoute,
+} as any)
+const EngineerReviewRoute = EngineerReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => EngineerRoute,
+} as any)
+const EngineerReportsRoute = EngineerReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => EngineerRoute,
+} as any)
 const EngineerProjectsRoute = EngineerProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
   getParentRoute: () => EngineerRoute,
 } as any)
+const EngineerIntegrityRoute = EngineerIntegrityRouteImport.update({
+  id: '/integrity',
+  path: '/integrity',
+  getParentRoute: () => EngineerRoute,
+} as any)
 const EngineerComplianceRoute = EngineerComplianceRouteImport.update({
   id: '/compliance',
   path: '/compliance',
+  getParentRoute: () => EngineerRoute,
+} as any)
+const EngineerCodesRoute = EngineerCodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
   getParentRoute: () => EngineerRoute,
 } as any)
 const EngineerCalculationsRoute = EngineerCalculationsRouteImport.update({
@@ -58,24 +89,41 @@ const EngineerBasisRoute = EngineerBasisRouteImport.update({
   path: '/basis',
   getParentRoute: () => EngineerRoute,
 } as any)
+const EngineerAuditRoute = EngineerAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => EngineerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/engineer': typeof EngineerRouteWithChildren
   '/training': typeof TrainingRoute
+  '/engineer/audit': typeof EngineerAuditRoute
   '/engineer/basis': typeof EngineerBasisRoute
   '/engineer/calculations': typeof EngineerCalculationsRoute
+  '/engineer/codes': typeof EngineerCodesRoute
   '/engineer/compliance': typeof EngineerComplianceRoute
+  '/engineer/integrity': typeof EngineerIntegrityRoute
   '/engineer/projects': typeof EngineerProjectsRoute
+  '/engineer/reports': typeof EngineerReportsRoute
+  '/engineer/review': typeof EngineerReviewRoute
+  '/engineer/workflow': typeof EngineerWorkflowRoute
   '/engineer/': typeof EngineerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/training': typeof TrainingRoute
+  '/engineer/audit': typeof EngineerAuditRoute
   '/engineer/basis': typeof EngineerBasisRoute
   '/engineer/calculations': typeof EngineerCalculationsRoute
+  '/engineer/codes': typeof EngineerCodesRoute
   '/engineer/compliance': typeof EngineerComplianceRoute
+  '/engineer/integrity': typeof EngineerIntegrityRoute
   '/engineer/projects': typeof EngineerProjectsRoute
+  '/engineer/reports': typeof EngineerReportsRoute
+  '/engineer/review': typeof EngineerReviewRoute
+  '/engineer/workflow': typeof EngineerWorkflowRoute
   '/engineer': typeof EngineerIndexRoute
 }
 export interface FileRoutesById {
@@ -83,10 +131,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/engineer': typeof EngineerRouteWithChildren
   '/training': typeof TrainingRoute
+  '/engineer/audit': typeof EngineerAuditRoute
   '/engineer/basis': typeof EngineerBasisRoute
   '/engineer/calculations': typeof EngineerCalculationsRoute
+  '/engineer/codes': typeof EngineerCodesRoute
   '/engineer/compliance': typeof EngineerComplianceRoute
+  '/engineer/integrity': typeof EngineerIntegrityRoute
   '/engineer/projects': typeof EngineerProjectsRoute
+  '/engineer/reports': typeof EngineerReportsRoute
+  '/engineer/review': typeof EngineerReviewRoute
+  '/engineer/workflow': typeof EngineerWorkflowRoute
   '/engineer/': typeof EngineerIndexRoute
 }
 export interface FileRouteTypes {
@@ -95,29 +149,47 @@ export interface FileRouteTypes {
     | '/'
     | '/engineer'
     | '/training'
+    | '/engineer/audit'
     | '/engineer/basis'
     | '/engineer/calculations'
+    | '/engineer/codes'
     | '/engineer/compliance'
+    | '/engineer/integrity'
     | '/engineer/projects'
+    | '/engineer/reports'
+    | '/engineer/review'
+    | '/engineer/workflow'
     | '/engineer/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/training'
+    | '/engineer/audit'
     | '/engineer/basis'
     | '/engineer/calculations'
+    | '/engineer/codes'
     | '/engineer/compliance'
+    | '/engineer/integrity'
     | '/engineer/projects'
+    | '/engineer/reports'
+    | '/engineer/review'
+    | '/engineer/workflow'
     | '/engineer'
   id:
     | '__root__'
     | '/'
     | '/engineer'
     | '/training'
+    | '/engineer/audit'
     | '/engineer/basis'
     | '/engineer/calculations'
+    | '/engineer/codes'
     | '/engineer/compliance'
+    | '/engineer/integrity'
     | '/engineer/projects'
+    | '/engineer/reports'
+    | '/engineer/review'
+    | '/engineer/workflow'
     | '/engineer/'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +229,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngineerIndexRouteImport
       parentRoute: typeof EngineerRoute
     }
+    '/engineer/workflow': {
+      id: '/engineer/workflow'
+      path: '/workflow'
+      fullPath: '/engineer/workflow'
+      preLoaderRoute: typeof EngineerWorkflowRouteImport
+      parentRoute: typeof EngineerRoute
+    }
+    '/engineer/review': {
+      id: '/engineer/review'
+      path: '/review'
+      fullPath: '/engineer/review'
+      preLoaderRoute: typeof EngineerReviewRouteImport
+      parentRoute: typeof EngineerRoute
+    }
+    '/engineer/reports': {
+      id: '/engineer/reports'
+      path: '/reports'
+      fullPath: '/engineer/reports'
+      preLoaderRoute: typeof EngineerReportsRouteImport
+      parentRoute: typeof EngineerRoute
+    }
     '/engineer/projects': {
       id: '/engineer/projects'
       path: '/projects'
@@ -164,11 +257,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngineerProjectsRouteImport
       parentRoute: typeof EngineerRoute
     }
+    '/engineer/integrity': {
+      id: '/engineer/integrity'
+      path: '/integrity'
+      fullPath: '/engineer/integrity'
+      preLoaderRoute: typeof EngineerIntegrityRouteImport
+      parentRoute: typeof EngineerRoute
+    }
     '/engineer/compliance': {
       id: '/engineer/compliance'
       path: '/compliance'
       fullPath: '/engineer/compliance'
       preLoaderRoute: typeof EngineerComplianceRouteImport
+      parentRoute: typeof EngineerRoute
+    }
+    '/engineer/codes': {
+      id: '/engineer/codes'
+      path: '/codes'
+      fullPath: '/engineer/codes'
+      preLoaderRoute: typeof EngineerCodesRouteImport
       parentRoute: typeof EngineerRoute
     }
     '/engineer/calculations': {
@@ -185,22 +292,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngineerBasisRouteImport
       parentRoute: typeof EngineerRoute
     }
+    '/engineer/audit': {
+      id: '/engineer/audit'
+      path: '/audit'
+      fullPath: '/engineer/audit'
+      preLoaderRoute: typeof EngineerAuditRouteImport
+      parentRoute: typeof EngineerRoute
+    }
   }
 }
 
 interface EngineerRouteChildren {
+  EngineerAuditRoute: typeof EngineerAuditRoute
   EngineerBasisRoute: typeof EngineerBasisRoute
   EngineerCalculationsRoute: typeof EngineerCalculationsRoute
+  EngineerCodesRoute: typeof EngineerCodesRoute
   EngineerComplianceRoute: typeof EngineerComplianceRoute
+  EngineerIntegrityRoute: typeof EngineerIntegrityRoute
   EngineerProjectsRoute: typeof EngineerProjectsRoute
+  EngineerReportsRoute: typeof EngineerReportsRoute
+  EngineerReviewRoute: typeof EngineerReviewRoute
+  EngineerWorkflowRoute: typeof EngineerWorkflowRoute
   EngineerIndexRoute: typeof EngineerIndexRoute
 }
 
 const EngineerRouteChildren: EngineerRouteChildren = {
+  EngineerAuditRoute: EngineerAuditRoute,
   EngineerBasisRoute: EngineerBasisRoute,
   EngineerCalculationsRoute: EngineerCalculationsRoute,
+  EngineerCodesRoute: EngineerCodesRoute,
   EngineerComplianceRoute: EngineerComplianceRoute,
+  EngineerIntegrityRoute: EngineerIntegrityRoute,
   EngineerProjectsRoute: EngineerProjectsRoute,
+  EngineerReportsRoute: EngineerReportsRoute,
+  EngineerReviewRoute: EngineerReviewRoute,
+  EngineerWorkflowRoute: EngineerWorkflowRoute,
   EngineerIndexRoute: EngineerIndexRoute,
 }
 
