@@ -13,6 +13,10 @@ import { Route as TrainingRouteImport } from './routes/training'
 import { Route as EngineerRouteImport } from './routes/engineer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EngineerIndexRouteImport } from './routes/engineer.index'
+import { Route as EngineerProjectsRouteImport } from './routes/engineer.projects'
+import { Route as EngineerComplianceRouteImport } from './routes/engineer.compliance'
+import { Route as EngineerCalculationsRouteImport } from './routes/engineer.calculations'
+import { Route as EngineerBasisRouteImport } from './routes/engineer.basis'
 
 const TrainingRoute = TrainingRouteImport.update({
   id: '/training',
@@ -34,16 +38,44 @@ const EngineerIndexRoute = EngineerIndexRouteImport.update({
   path: '/',
   getParentRoute: () => EngineerRoute,
 } as any)
+const EngineerProjectsRoute = EngineerProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => EngineerRoute,
+} as any)
+const EngineerComplianceRoute = EngineerComplianceRouteImport.update({
+  id: '/compliance',
+  path: '/compliance',
+  getParentRoute: () => EngineerRoute,
+} as any)
+const EngineerCalculationsRoute = EngineerCalculationsRouteImport.update({
+  id: '/calculations',
+  path: '/calculations',
+  getParentRoute: () => EngineerRoute,
+} as any)
+const EngineerBasisRoute = EngineerBasisRouteImport.update({
+  id: '/basis',
+  path: '/basis',
+  getParentRoute: () => EngineerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/engineer': typeof EngineerRouteWithChildren
   '/training': typeof TrainingRoute
+  '/engineer/basis': typeof EngineerBasisRoute
+  '/engineer/calculations': typeof EngineerCalculationsRoute
+  '/engineer/compliance': typeof EngineerComplianceRoute
+  '/engineer/projects': typeof EngineerProjectsRoute
   '/engineer/': typeof EngineerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/training': typeof TrainingRoute
+  '/engineer/basis': typeof EngineerBasisRoute
+  '/engineer/calculations': typeof EngineerCalculationsRoute
+  '/engineer/compliance': typeof EngineerComplianceRoute
+  '/engineer/projects': typeof EngineerProjectsRoute
   '/engineer': typeof EngineerIndexRoute
 }
 export interface FileRoutesById {
@@ -51,14 +83,42 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/engineer': typeof EngineerRouteWithChildren
   '/training': typeof TrainingRoute
+  '/engineer/basis': typeof EngineerBasisRoute
+  '/engineer/calculations': typeof EngineerCalculationsRoute
+  '/engineer/compliance': typeof EngineerComplianceRoute
+  '/engineer/projects': typeof EngineerProjectsRoute
   '/engineer/': typeof EngineerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/engineer' | '/training' | '/engineer/'
+  fullPaths:
+    | '/'
+    | '/engineer'
+    | '/training'
+    | '/engineer/basis'
+    | '/engineer/calculations'
+    | '/engineer/compliance'
+    | '/engineer/projects'
+    | '/engineer/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/training' | '/engineer'
-  id: '__root__' | '/' | '/engineer' | '/training' | '/engineer/'
+  to:
+    | '/'
+    | '/training'
+    | '/engineer/basis'
+    | '/engineer/calculations'
+    | '/engineer/compliance'
+    | '/engineer/projects'
+    | '/engineer'
+  id:
+    | '__root__'
+    | '/'
+    | '/engineer'
+    | '/training'
+    | '/engineer/basis'
+    | '/engineer/calculations'
+    | '/engineer/compliance'
+    | '/engineer/projects'
+    | '/engineer/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -97,14 +157,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EngineerIndexRouteImport
       parentRoute: typeof EngineerRoute
     }
+    '/engineer/projects': {
+      id: '/engineer/projects'
+      path: '/projects'
+      fullPath: '/engineer/projects'
+      preLoaderRoute: typeof EngineerProjectsRouteImport
+      parentRoute: typeof EngineerRoute
+    }
+    '/engineer/compliance': {
+      id: '/engineer/compliance'
+      path: '/compliance'
+      fullPath: '/engineer/compliance'
+      preLoaderRoute: typeof EngineerComplianceRouteImport
+      parentRoute: typeof EngineerRoute
+    }
+    '/engineer/calculations': {
+      id: '/engineer/calculations'
+      path: '/calculations'
+      fullPath: '/engineer/calculations'
+      preLoaderRoute: typeof EngineerCalculationsRouteImport
+      parentRoute: typeof EngineerRoute
+    }
+    '/engineer/basis': {
+      id: '/engineer/basis'
+      path: '/basis'
+      fullPath: '/engineer/basis'
+      preLoaderRoute: typeof EngineerBasisRouteImport
+      parentRoute: typeof EngineerRoute
+    }
   }
 }
 
 interface EngineerRouteChildren {
+  EngineerBasisRoute: typeof EngineerBasisRoute
+  EngineerCalculationsRoute: typeof EngineerCalculationsRoute
+  EngineerComplianceRoute: typeof EngineerComplianceRoute
+  EngineerProjectsRoute: typeof EngineerProjectsRoute
   EngineerIndexRoute: typeof EngineerIndexRoute
 }
 
 const EngineerRouteChildren: EngineerRouteChildren = {
+  EngineerBasisRoute: EngineerBasisRoute,
+  EngineerCalculationsRoute: EngineerCalculationsRoute,
+  EngineerComplianceRoute: EngineerComplianceRoute,
+  EngineerProjectsRoute: EngineerProjectsRoute,
   EngineerIndexRoute: EngineerIndexRoute,
 }
 
