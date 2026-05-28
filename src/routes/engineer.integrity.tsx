@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { RequireActiveProject } from '@/components/RequireActiveProject';
 import { useProjects } from '@/state/projects';
 import { MetricCard } from '@/components/MetricCard';
+import { StatusBadge } from '@/components/StatusBadge';
 import { useState } from 'react';
 
 export const Route = createFileRoute('/engineer/integrity')({
@@ -55,7 +56,7 @@ function Integrity({ id }: { id: string }) {
                   <td className="px-3 py-1.5 font-mono">{a.km}</td>
                   <td className="px-3 py-1.5">{a.type}</td>
                   <td className="px-3 py-1.5 font-mono">{a.depthPct}</td>
-                  <td className="px-3 py-1.5"><span className={`text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-sm bg-${a.severity} text-${a.severity}-foreground`}>{a.severity}</span></td>
+                  <td className="px-3 py-1.5"><StatusBadge status={a.severity} /></td>
                 </tr>
               ))}
             </tbody>

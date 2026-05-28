@@ -12,7 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrainingRouteImport } from './routes/training'
 import { Route as EngineerRouteImport } from './routes/engineer'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TrainingIndexRouteImport } from './routes/training.index'
 import { Route as EngineerIndexRouteImport } from './routes/engineer.index'
+import { Route as TrainingScenariosRouteImport } from './routes/training.scenarios'
+import { Route as TrainingReportsRouteImport } from './routes/training.reports'
+import { Route as TrainingPracticeRouteImport } from './routes/training.practice'
+import { Route as TrainingLessonsRouteImport } from './routes/training.lessons'
+import { Route as TrainingCompetencyRouteImport } from './routes/training.competency'
 import { Route as EngineerWorkflowRouteImport } from './routes/engineer.workflow'
 import { Route as EngineerReviewRouteImport } from './routes/engineer.review'
 import { Route as EngineerReportsRouteImport } from './routes/engineer.reports'
@@ -39,10 +45,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainingIndexRoute = TrainingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TrainingRoute,
+} as any)
 const EngineerIndexRoute = EngineerIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => EngineerRoute,
+} as any)
+const TrainingScenariosRoute = TrainingScenariosRouteImport.update({
+  id: '/scenarios',
+  path: '/scenarios',
+  getParentRoute: () => TrainingRoute,
+} as any)
+const TrainingReportsRoute = TrainingReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => TrainingRoute,
+} as any)
+const TrainingPracticeRoute = TrainingPracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
+  getParentRoute: () => TrainingRoute,
+} as any)
+const TrainingLessonsRoute = TrainingLessonsRouteImport.update({
+  id: '/lessons',
+  path: '/lessons',
+  getParentRoute: () => TrainingRoute,
+} as any)
+const TrainingCompetencyRoute = TrainingCompetencyRouteImport.update({
+  id: '/competency',
+  path: '/competency',
+  getParentRoute: () => TrainingRoute,
 } as any)
 const EngineerWorkflowRoute = EngineerWorkflowRouteImport.update({
   id: '/workflow',
@@ -98,7 +134,7 @@ const EngineerAuditRoute = EngineerAuditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/engineer': typeof EngineerRouteWithChildren
-  '/training': typeof TrainingRoute
+  '/training': typeof TrainingRouteWithChildren
   '/engineer/audit': typeof EngineerAuditRoute
   '/engineer/basis': typeof EngineerBasisRoute
   '/engineer/calculations': typeof EngineerCalculationsRoute
@@ -109,11 +145,16 @@ export interface FileRoutesByFullPath {
   '/engineer/reports': typeof EngineerReportsRoute
   '/engineer/review': typeof EngineerReviewRoute
   '/engineer/workflow': typeof EngineerWorkflowRoute
+  '/training/competency': typeof TrainingCompetencyRoute
+  '/training/lessons': typeof TrainingLessonsRoute
+  '/training/practice': typeof TrainingPracticeRoute
+  '/training/reports': typeof TrainingReportsRoute
+  '/training/scenarios': typeof TrainingScenariosRoute
   '/engineer/': typeof EngineerIndexRoute
+  '/training/': typeof TrainingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/training': typeof TrainingRoute
   '/engineer/audit': typeof EngineerAuditRoute
   '/engineer/basis': typeof EngineerBasisRoute
   '/engineer/calculations': typeof EngineerCalculationsRoute
@@ -124,13 +165,19 @@ export interface FileRoutesByTo {
   '/engineer/reports': typeof EngineerReportsRoute
   '/engineer/review': typeof EngineerReviewRoute
   '/engineer/workflow': typeof EngineerWorkflowRoute
+  '/training/competency': typeof TrainingCompetencyRoute
+  '/training/lessons': typeof TrainingLessonsRoute
+  '/training/practice': typeof TrainingPracticeRoute
+  '/training/reports': typeof TrainingReportsRoute
+  '/training/scenarios': typeof TrainingScenariosRoute
   '/engineer': typeof EngineerIndexRoute
+  '/training': typeof TrainingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/engineer': typeof EngineerRouteWithChildren
-  '/training': typeof TrainingRoute
+  '/training': typeof TrainingRouteWithChildren
   '/engineer/audit': typeof EngineerAuditRoute
   '/engineer/basis': typeof EngineerBasisRoute
   '/engineer/calculations': typeof EngineerCalculationsRoute
@@ -141,7 +188,13 @@ export interface FileRoutesById {
   '/engineer/reports': typeof EngineerReportsRoute
   '/engineer/review': typeof EngineerReviewRoute
   '/engineer/workflow': typeof EngineerWorkflowRoute
+  '/training/competency': typeof TrainingCompetencyRoute
+  '/training/lessons': typeof TrainingLessonsRoute
+  '/training/practice': typeof TrainingPracticeRoute
+  '/training/reports': typeof TrainingReportsRoute
+  '/training/scenarios': typeof TrainingScenariosRoute
   '/engineer/': typeof EngineerIndexRoute
+  '/training/': typeof TrainingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,11 +212,16 @@ export interface FileRouteTypes {
     | '/engineer/reports'
     | '/engineer/review'
     | '/engineer/workflow'
+    | '/training/competency'
+    | '/training/lessons'
+    | '/training/practice'
+    | '/training/reports'
+    | '/training/scenarios'
     | '/engineer/'
+    | '/training/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/training'
     | '/engineer/audit'
     | '/engineer/basis'
     | '/engineer/calculations'
@@ -174,7 +232,13 @@ export interface FileRouteTypes {
     | '/engineer/reports'
     | '/engineer/review'
     | '/engineer/workflow'
+    | '/training/competency'
+    | '/training/lessons'
+    | '/training/practice'
+    | '/training/reports'
+    | '/training/scenarios'
     | '/engineer'
+    | '/training'
   id:
     | '__root__'
     | '/'
@@ -190,13 +254,19 @@ export interface FileRouteTypes {
     | '/engineer/reports'
     | '/engineer/review'
     | '/engineer/workflow'
+    | '/training/competency'
+    | '/training/lessons'
+    | '/training/practice'
+    | '/training/reports'
+    | '/training/scenarios'
     | '/engineer/'
+    | '/training/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EngineerRoute: typeof EngineerRouteWithChildren
-  TrainingRoute: typeof TrainingRoute
+  TrainingRoute: typeof TrainingRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -222,12 +292,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/training/': {
+      id: '/training/'
+      path: '/'
+      fullPath: '/training/'
+      preLoaderRoute: typeof TrainingIndexRouteImport
+      parentRoute: typeof TrainingRoute
+    }
     '/engineer/': {
       id: '/engineer/'
       path: '/'
       fullPath: '/engineer/'
       preLoaderRoute: typeof EngineerIndexRouteImport
       parentRoute: typeof EngineerRoute
+    }
+    '/training/scenarios': {
+      id: '/training/scenarios'
+      path: '/scenarios'
+      fullPath: '/training/scenarios'
+      preLoaderRoute: typeof TrainingScenariosRouteImport
+      parentRoute: typeof TrainingRoute
+    }
+    '/training/reports': {
+      id: '/training/reports'
+      path: '/reports'
+      fullPath: '/training/reports'
+      preLoaderRoute: typeof TrainingReportsRouteImport
+      parentRoute: typeof TrainingRoute
+    }
+    '/training/practice': {
+      id: '/training/practice'
+      path: '/practice'
+      fullPath: '/training/practice'
+      preLoaderRoute: typeof TrainingPracticeRouteImport
+      parentRoute: typeof TrainingRoute
+    }
+    '/training/lessons': {
+      id: '/training/lessons'
+      path: '/lessons'
+      fullPath: '/training/lessons'
+      preLoaderRoute: typeof TrainingLessonsRouteImport
+      parentRoute: typeof TrainingRoute
+    }
+    '/training/competency': {
+      id: '/training/competency'
+      path: '/competency'
+      fullPath: '/training/competency'
+      preLoaderRoute: typeof TrainingCompetencyRouteImport
+      parentRoute: typeof TrainingRoute
     }
     '/engineer/workflow': {
       id: '/engineer/workflow'
@@ -334,10 +446,32 @@ const EngineerRouteWithChildren = EngineerRoute._addFileChildren(
   EngineerRouteChildren,
 )
 
+interface TrainingRouteChildren {
+  TrainingCompetencyRoute: typeof TrainingCompetencyRoute
+  TrainingLessonsRoute: typeof TrainingLessonsRoute
+  TrainingPracticeRoute: typeof TrainingPracticeRoute
+  TrainingReportsRoute: typeof TrainingReportsRoute
+  TrainingScenariosRoute: typeof TrainingScenariosRoute
+  TrainingIndexRoute: typeof TrainingIndexRoute
+}
+
+const TrainingRouteChildren: TrainingRouteChildren = {
+  TrainingCompetencyRoute: TrainingCompetencyRoute,
+  TrainingLessonsRoute: TrainingLessonsRoute,
+  TrainingPracticeRoute: TrainingPracticeRoute,
+  TrainingReportsRoute: TrainingReportsRoute,
+  TrainingScenariosRoute: TrainingScenariosRoute,
+  TrainingIndexRoute: TrainingIndexRoute,
+}
+
+const TrainingRouteWithChildren = TrainingRoute._addFileChildren(
+  TrainingRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EngineerRoute: EngineerRouteWithChildren,
-  TrainingRoute: TrainingRoute,
+  TrainingRoute: TrainingRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
