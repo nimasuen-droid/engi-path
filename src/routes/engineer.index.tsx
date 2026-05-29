@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useProjects } from "@/state/projects";
 import { evaluate, score } from "@/services/rules/library";
 import { MetricCard } from "@/components/MetricCard";
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/engineer/")({
 
 function Dashboard() {
   const { projects, loadSampleData, setActive } = useProjects();
+  const navigate = useNavigate();
   const active = projects.filter((p) => !p.archived);
   const totals = active.reduce(
     (acc, p) => {
@@ -84,8 +85,12 @@ function Dashboard() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => setActive(p.id)}
+                  onClick={() => {
+                    setActive(p.id);
+                    void navigate({ to: "/engineer/basis" });
+                  }}
                   className="text-left border bg-card p-4 hover:border-primary transition-colors"
+                  aria-label={`Continue ${p.name} in Design Basis`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>

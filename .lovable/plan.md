@@ -5,6 +5,7 @@ A local-first engineering web app with **Engineer Mode** and **Training Mode** a
 ## Design System
 
 Engineering-grade, EPC-style. Tokens in `src/styles.css` (oklch):
+
 - `--primary` deep blue (~#0E3B66)
 - `--graphite` neutral surface (~#2A323A)
 - `--compliant` green, `--warning` muted orange, `--noncompliant` red, `--incomplete` grey

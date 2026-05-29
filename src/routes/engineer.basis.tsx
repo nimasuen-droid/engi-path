@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { RequireActiveProject } from "@/components/RequireActiveProject";
 import { useProjects } from "@/state/projects";
 import { useState } from "react";
@@ -36,9 +36,11 @@ const STEPS = [
 
 function BasisWizard({ id }: { id: string }) {
   const { projects, upsert } = useProjects();
+  const navigate = useNavigate();
   const project = projects.find((p) => p.id === id)!;
   const [p, setP] = useState<Project>(project);
   const [step, setStep] = useState(0);
+  const [finishState, setFinishState] = useState<"idle" | "saving" | "saved">("idle");
   const selectedFluid = FLUID_OPTIONS.find((f) => f.value === p.fluidType) ?? FLUID_OPTIONS[0];
   const selectedInstall =
     INSTALLATION_OPTIONS.find((i) => i.value === p.installationType) ?? INSTALLATION_OPTIONS[0];
@@ -64,6 +66,15 @@ function BasisWizard({ id }: { id: string }) {
 
   function save() {
     void upsert(p);
+  }
+
+  async function finishAndOpenCalculations() {
+    setFinishState("saving");
+    await upsert(p);
+    setFinishState("saved");
+    window.setTimeout(() => {
+      void navigate({ to: "/engineer/calculations" });
+    }, 450);
   }
 
   return (
@@ -384,13 +395,22 @@ function BasisWizard({ id }: { id: string }) {
             </button>
           ) : (
             <button
-              onClick={save}
-              className="tap-target text-xs px-3 py-2 bg-compliant text-compliant-foreground rounded-sm"
+              onClick={() => void finishAndOpenCalculations()}
+              disabled={finishState === "saving"}
+              className="tap-target inline-flex items-center gap-1 text-xs px-3 py-2 bg-compliant text-compliant-foreground rounded-sm disabled:opacity-70"
             >
-              Finish & Save
+              {finishState === "saving"
+                ? "Saving..."
+                : finishState === "saved"
+                  ? "Opening Calculations"
+                  : "Finish & Save"}
+              {finishState === "saved" && <ChevronRight className="size-3" />}
             </button>
           )}
         </div>
+      </div>
+      <div aria-live="polite" className="mt-3 min-h-5 text-right text-xs text-muted-foreground">
+        {finishState === "saved" && "Design basis saved. Moving to calculations now."}
       </div>
     </div>
   );

@@ -1,6 +1,10 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router';
-import { AppShell } from '@/components/AppShell';
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { AppShell } from "@/components/AppShell";
 
-export const Route = createFileRoute('/engineer')({
-  component: () => <AppShell mode="engineer"><Outlet /></AppShell>,
+export const Route = createFileRoute("/engineer")({
+  component: () => (
+    <AppShell mode="engineer">
+      <Outlet />
+    </AppShell>
+  ),
 });

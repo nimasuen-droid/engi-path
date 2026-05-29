@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { SCENARIOS } from '@/services/training/scenarios';
-import { useTraining } from '@/state/training';
-import { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { SCENARIOS } from "@/services/training/scenarios";
+import { useTraining } from "@/state/training";
+import { useState } from "react";
+import { Check, X } from "lucide-react";
 
-export const Route = createFileRoute('/training/scenarios')({
-  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === 'string' ? s.id : '' }),
+export const Route = createFileRoute("/training/scenarios")({
+  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : "" }),
   component: ScenariosPage,
 });
 
@@ -20,9 +20,16 @@ function ScenarioList() {
   return (
     <div className="grid md:grid-cols-2 gap-3">
       {SCENARIOS.map((s) => (
-        <Link key={s.id} to="/training/scenarios" search={{ id: s.id }} className="border bg-card p-4 hover:border-primary">
+        <Link
+          key={s.id}
+          to="/training/scenarios"
+          search={{ id: s.id }}
+          className="border bg-card p-4 hover:border-primary"
+        >
           <div className="font-semibold text-sm">{s.title}</div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{s.category}</div>
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            {s.category}
+          </div>
           <p className="text-xs text-muted-foreground mt-2">{s.description}</p>
         </Link>
       ))}
@@ -55,26 +62,50 @@ function Player({ scenarioId }: { scenarioId: string }) {
     const score = Math.round((correct / scenario.steps.length) * 100);
     return (
       <div className="max-w-xl mx-auto border bg-card p-6 text-center">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Result</div>
+        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          Result
+        </div>
         <div className="text-4xl font-mono mt-2">{score}%</div>
-        <div className="text-sm text-muted-foreground mt-1">{correct} of {scenario.steps.length} correct</div>
+        <div className="text-sm text-muted-foreground mt-1">
+          {correct} of {scenario.steps.length} correct
+        </div>
         <div className="mt-6 space-y-2 text-left">
           {scenario.steps.map((s, i) => {
-            const pick = picks[i]; const opt = s.options[pick];
+            const pick = picks[i];
+            const opt = s.options[pick];
             return (
               <div key={i} className="border p-3">
                 <div className="text-xs font-medium">{s.prompt}</div>
-                <div className={`mt-1 text-xs flex items-start gap-1 ${opt.correct ? 'text-compliant' : 'text-noncompliant'}`}>
-                  {opt.correct ? <Check className="size-3.5 mt-0.5" /> : <X className="size-3.5 mt-0.5" />}
-                  <span>{opt.label} — {opt.feedback}</span>
+                <div
+                  className={`mt-1 text-xs flex items-start gap-1 ${opt.correct ? "text-compliant" : "text-noncompliant"}`}
+                >
+                  {opt.correct ? (
+                    <Check className="size-3.5 mt-0.5" />
+                  ) : (
+                    <X className="size-3.5 mt-0.5" />
+                  )}
+                  <span>
+                    {opt.label} — {opt.feedback}
+                  </span>
                 </div>
               </div>
             );
           })}
         </div>
         <div className="mt-6 flex gap-2 justify-center">
-          <Link to="/training" className="text-xs border px-3 py-1.5 rounded-sm">Back to Dashboard</Link>
-          <button onClick={() => { setStep(0); setPicks([]); setDone(false); }} className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-sm">Retry</button>
+          <Link to="/training" className="text-xs border px-3 py-1.5 rounded-sm">
+            Back to Dashboard
+          </Link>
+          <button
+            onClick={() => {
+              setStep(0);
+              setPicks([]);
+              setDone(false);
+            }}
+            className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-sm"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -83,7 +114,9 @@ function Player({ scenarioId }: { scenarioId: string }) {
   return (
     <div className="max-w-xl mx-auto space-y-4">
       <div>
-        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{scenario.category} · Step {step + 1}/{scenario.steps.length}</div>
+        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          {scenario.category} · Step {step + 1}/{scenario.steps.length}
+        </div>
         <h2 className="text-lg font-semibold mt-1">{scenario.title}</h2>
         <p className="text-sm text-muted-foreground mt-1">{scenario.description}</p>
       </div>
@@ -91,8 +124,15 @@ function Player({ scenarioId }: { scenarioId: string }) {
         <div className="text-sm font-medium mb-3">{current.prompt}</div>
         <div className="space-y-2">
           {current.options.map((o, i) => (
-            <button key={i} onClick={() => choose(i)} className="w-full text-left border bg-background p-3 text-sm hover:border-primary">
-              <span className="font-mono text-xs text-muted-foreground mr-2">{String.fromCharCode(65 + i)}.</span>{o.label}
+            <button
+              key={i}
+              onClick={() => choose(i)}
+              className="w-full text-left border bg-background p-3 text-sm hover:border-primary"
+            >
+              <span className="font-mono text-xs text-muted-foreground mr-2">
+                {String.fromCharCode(65 + i)}.
+              </span>
+              {o.label}
             </button>
           ))}
         </div>

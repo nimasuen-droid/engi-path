@@ -1,6 +1,71 @@
-export type FluidType = 'gas' | 'liquid' | 'multiphase' | 'water_injection' | 'co2' | 'hydrogen';
-export type InstallationType = 'onshore' | 'offshore' | 'buried' | 'above_ground' | 'subsea';
-export type ComplianceStatus = 'compliant' | 'warning' | 'noncompliant' | 'incomplete';
+export type FluidType = "gas" | "liquid" | "multiphase" | "water_injection" | "co2" | "hydrogen";
+export type InstallationType = "onshore" | "offshore" | "buried" | "above_ground" | "subsea";
+export type ComplianceStatus = "compliant" | "warning" | "noncompliant" | "incomplete";
+export type UnitSystem = "metric" | "us_customary";
+export type CalculationClassification = "screening" | "design_basis" | "detailed_not_implemented";
+export type AssumptionConfidence = "confirmed" | "assumed" | "estimated" | "placeholder";
+
+export interface CodeEdition {
+  designCode: string;
+  edition: string;
+  notes?: string;
+}
+
+export interface RouteSection {
+  id: string;
+  name: string;
+  length_km: number;
+  elevationChange_m: number;
+  classLocation?: 1 | 2 | 3 | 4;
+  designPressure_MPa?: number;
+  notes?: string;
+}
+
+export interface ComponentLimit {
+  id: string;
+  tag: string;
+  type: "pipe" | "valve" | "flange" | "fitting" | "launcher" | "receiver" | "instrument" | "other";
+  rating_MPa: number;
+  temperature_C?: number;
+  notes?: string;
+}
+
+export interface CalculationRevision {
+  id: string;
+  revision: string;
+  createdAt: string;
+  createdBy: string;
+  basisHash: string;
+  summary: string;
+  status: ComplianceStatus;
+  sheets: CalculationTraceSheet[];
+}
+
+export interface CalculationTraceSheet {
+  id: string;
+  title: string;
+  revision: string;
+  classification: CalculationClassification;
+  codeBasis: string;
+  inputs: Array<{ label: string; value: string; unit?: string; source: string }>;
+  steps: Array<{ label: string; expression: string; result: string; note?: string }>;
+  result: string;
+  status: ComplianceStatus;
+  timestamp: string;
+  calculationVersion: string;
+  limitations: string[];
+}
+
+export interface EngineeringAssumption {
+  id: string;
+  assumption: string;
+  source: string;
+  confidence: AssumptionConfidence;
+  owner: string;
+  status: "open" | "pending" | "closed" | "superseded";
+  createdAt: string;
+  updatedAt?: string;
+}
 
 export interface Project {
   id: string;
@@ -24,6 +89,12 @@ export interface Project {
   hydrotestPressure_MPa?: number;
   classLocation?: 1 | 2 | 3 | 4;
   sourService?: boolean;
+  unitSystem?: UnitSystem;
+  codeEdition?: CodeEdition;
+  routeSections?: RouteSection[];
+  componentLimits?: ComponentLimit[];
+  calculationRevisions?: CalculationRevision[];
+  assumptionsRegister?: EngineeringAssumption[];
   archived?: boolean;
   workflow?: WorkflowGraph;
   createdAt: string;
@@ -36,11 +107,21 @@ export interface WorkflowNodeData {
   notes?: string;
 }
 export type WorkflowNodeKind =
-  | 'design_basis' | 'hydraulic' | 'wall_thickness' | 'material'
-  | 'hydrotest' | 'integrity' | 'approval';
+  | "design_basis"
+  | "hydraulic"
+  | "wall_thickness"
+  | "material"
+  | "hydrotest"
+  | "integrity"
+  | "approval";
 
 export interface WorkflowGraph {
-  nodes: Array<{ id: string; type?: string; position: { x: number; y: number }; data: WorkflowNodeData }>;
+  nodes: Array<{
+    id: string;
+    type?: string;
+    position: { x: number; y: number };
+    data: WorkflowNodeData;
+  }>;
   edges: Array<{ id: string; source: string; target: string }>;
 }
 
@@ -48,7 +129,7 @@ export interface Rule {
   id: string;
   title: string;
   condition: (p: Project) => boolean;
-  severity: 'info' | 'warning' | 'critical';
+  severity: "info" | "warning" | "critical";
   message: string;
   codeRef: string;
   explanation: string;

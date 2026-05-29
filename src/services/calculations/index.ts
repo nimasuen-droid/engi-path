@@ -30,6 +30,16 @@ export interface MaterialRecommendation {
   actions: string[];
 }
 
+export function internalDiameter(opts: {
+  outsideDiameter_mm: number;
+  wallThickness_mm?: number;
+  fallbackRatio?: number;
+}) {
+  const fallback = opts.outsideDiameter_mm * (opts.fallbackRatio ?? 0.94);
+  if (!opts.wallThickness_mm || opts.wallThickness_mm <= 0) return round(fallback, 3);
+  return round(Math.max(1, opts.outsideDiameter_mm - 2 * opts.wallThickness_mm), 3);
+}
+
 const MATERIAL_LIBRARY = [
   { grade: "API 5L Grade B", smys_MPa: 241, pressureBand: "low" },
   { grade: "API 5L X42", smys_MPa: 290, pressureBand: "low-medium" },
@@ -249,7 +259,7 @@ export function hoopStress(opts: {
   };
 }
 
-/** Fluid velocity v = Q / A, Q in m3/s, D in mm. */
+/** Fluid velocity v = Q / A, Q in m3/s, D is hydraulic/internal diameter in mm. */
 export function velocity(opts: { Q_m3s: number; D_mm: number; max_ms?: number }): CalcResult {
   const A = (Math.PI * (opts.D_mm / 1000) ** 2) / 4;
   const v = opts.Q_m3s / A;
@@ -257,8 +267,11 @@ export function velocity(opts: { Q_m3s: number; D_mm: number; max_ms?: number })
   return {
     value: round(v, 3),
     unit: "m/s",
-    formula: "v = Q / (pi * D^2 / 4)",
-    assumptions: ["Single-phase steady-state screening.", "Uses nominal OD as screening diameter."],
+    formula: "v = Q / (pi * ID^2 / 4)",
+    assumptions: [
+      "Single-phase steady-state screening.",
+      "Uses hydraulic/internal diameter; confirm actual ID from selected schedule and mill tolerance.",
+    ],
     codeRef: "General hydraulic design practice",
     pass,
     insight:
@@ -270,9 +283,9 @@ export function velocity(opts: { Q_m3s: number; D_mm: number; max_ms?: number })
         why: "Higher flow through the same pipe raises velocity.",
       },
       {
-        label: "Pipe diameter",
+        label: "Hydraulic ID",
         value: `${opts.D_mm} mm`,
-        why: "Diameter has a squared effect on area, so small size changes strongly affect velocity.",
+        why: "Internal diameter has a squared effect on area, so wall schedule strongly affects velocity.",
       },
     ],
     recommendations:
@@ -303,8 +316,13 @@ export function pressureDrop(opts: {
   return {
     value: round(drop, 4),
     unit: "MPa/km",
-    formula: "dP = f * (L / D) * rho * v^2 / 2",
-    assumptions: ["Darcy-Weisbach.", "Incompressible single-phase screening.", `L = ${L} m.`],
+    formula: "dP = f * (L / ID) * rho * v^2 / 2",
+    assumptions: [
+      "Darcy-Weisbach.",
+      "Incompressible single-phase screening.",
+      "Uses hydraulic/internal diameter.",
+      `L = ${L} m.`,
+    ],
     codeRef: "Standard hydraulic design practice",
     pass,
     insight:
@@ -490,6 +508,72 @@ export function surgeDesignCheck(opts: {
     notes: pass
       ? undefined
       : `Peak pressure exceeds design pressure by ${round(Math.abs(margin), 3)} MPa.`,
+  };
+}
+
+/** API RP 14E erosional velocity screening: V_e = C / sqrt(rho_m). */
+export function erosionVelocityApi14E(opts: {
+  actualVelocity_ms: number;
+  mixtureDensity_kgm3: number;
+  cFactor?: number;
+  service?: "continuous" | "intermittent";
+}): CalcResult {
+  const c = opts.cFactor ?? (opts.service === "intermittent" ? 125 : 100);
+  const rhoLbFt3 = opts.mixtureDensity_kgm3 * 0.062428;
+  const limitFts = c / Math.sqrt(rhoLbFt3);
+  const limitMs = limitFts / 3.28084;
+  const utilization = (opts.actualVelocity_ms / limitMs) * 100;
+  const pass = opts.actualVelocity_ms <= limitMs;
+  return {
+    value: round(limitMs, 3),
+    unit: "m/s allowable",
+    formula: "V_e = C / sqrt(rho_m)",
+    assumptions: [
+      "API RP 14E empirical erosional velocity screening.",
+      `C factor = ${c}; typical screening values are around 100 continuous and 125 intermittent.`,
+      `Mixture density = ${round(rhoLbFt3, 2)} lb/ft3 converted from ${opts.mixtureDensity_kgm3} kg/m3.`,
+      "Does not replace detailed erosion-corrosion, solids, droplet impingement, sand, corrosion inhibitor, or materials review.",
+    ],
+    codeRef: "API RP 14E erosional velocity screening",
+    pass,
+    insight:
+      "Erosion velocity is an operability and integrity limit. It prevents the design from accepting high velocities that may remove protective films, accelerate corrosion, damage bends/fittings, or cause solids/liquid impingement damage.",
+    drivers: [
+      {
+        label: "Actual velocity",
+        value: `${opts.actualVelocity_ms} m/s`,
+        why: "This is the flow velocity being screened against the empirical erosion limit.",
+      },
+      {
+        label: "Mixture density",
+        value: `${opts.mixtureDensity_kgm3} kg/m3`,
+        why: "Higher density lowers allowable velocity because moving fluid carries more momentum.",
+      },
+      {
+        label: "C factor",
+        value: String(c),
+        why: "The C factor reflects service severity and should be selected from project practice, not tuned just to pass.",
+      },
+      {
+        label: "Utilization",
+        value: `${round(utilization, 1)}%`,
+        why: "Values above 100% exceed the screening erosional velocity limit.",
+      },
+    ],
+    recommendations:
+      pass === false
+        ? [
+            "Increase pipe size, reduce flow rate, split service into parallel lines, or reduce erosive service severity.",
+            "Run service-specific erosion analysis for sand, droplets, CO2/H2S corrosion, elbows, restrictions, and fittings.",
+            "Do not increase C factor to force a pass unless the project standard and corrosion/material review justify it.",
+          ]
+        : [
+            "Confirm C factor, mixture density, solids/liquid loading, corrosion inhibitor strategy, and high-risk fittings.",
+            "Check local velocities at restrictions, bends, valves, and manifolds, not only mainline average velocity.",
+          ],
+    notes: pass
+      ? undefined
+      : `Actual velocity exceeds API RP 14E screening limit by ${round(opts.actualVelocity_ms - limitMs, 3)} m/s.`,
   };
 }
 
