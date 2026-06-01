@@ -3,11 +3,38 @@ import { useProjects } from "@/state/projects";
 import { evaluate, score } from "@/services/rules/library";
 import { MetricCard } from "@/components/MetricCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Database } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  Calculator,
+  Database,
+  FileSearch,
+  FileText,
+  FolderKanban,
+  HelpCircle,
+  History,
+  ListChecks,
+  Network,
+  ShieldCheck,
+} from "lucide-react";
 
 export const Route = createFileRoute("/engineer/")({
   component: Dashboard,
 });
+
+const MODULES = [
+  { to: "/engineer/manual", label: "User Guide", icon: HelpCircle },
+  { to: "/engineer/projects", label: "Projects", icon: FolderKanban },
+  { to: "/engineer/basis", label: "Design Basis", icon: ListChecks },
+  { to: "/engineer/calculations", label: "Calculations", icon: Calculator },
+  { to: "/engineer/workflow", label: "Workflow", icon: Network },
+  { to: "/engineer/compliance", label: "Compliance", icon: ShieldCheck },
+  { to: "/engineer/review", label: "Assurance", icon: FileSearch },
+  { to: "/engineer/integrity", label: "Integrity", icon: Activity },
+  { to: "/engineer/codes", label: "Codes", icon: BookOpen },
+  { to: "/engineer/reports", label: "Reports", icon: FileText },
+  { to: "/engineer/audit", label: "Audit Trail", icon: History },
+];
 
 function Dashboard() {
   const { projects, loadSampleData, setActive } = useProjects();
@@ -45,6 +72,35 @@ function Dashboard() {
           hint="Excluded from metrics"
         />
       </div>
+
+      <section className="app-card p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">Engineering Modules</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Open the next design, calculation, assurance, or reporting workspace.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
+          {MODULES.map((module) => {
+            const Icon = module.icon;
+            return (
+              <Link
+                key={module.to}
+                to={module.to}
+                className="tap-target flex min-h-24 flex-col items-center justify-center gap-2 rounded-sm border bg-background px-2 py-3 text-center text-xs font-medium transition-colors hover:border-primary hover:bg-primary/5 focus-visible:border-primary"
+                aria-label={`Open ${module.label}`}
+              >
+                <span className="grid size-10 place-items-center rounded-sm bg-primary/10 text-primary">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+                <span className="line-clamp-2 leading-tight">{module.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       <section>
         <div className="flex items-center justify-between mb-3">

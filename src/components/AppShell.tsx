@@ -97,44 +97,50 @@ export function AppShell({
             {mode}
           </span>
         </div>
-        <nav
-          aria-label={`${mode} workspace navigation`}
-          className="touch-scroll flex gap-1 overflow-x-auto px-3 pb-3 lg:block lg:h-[calc(100vh-9rem)] lg:space-y-0.5 lg:overflow-y-auto lg:px-2 lg:py-2"
-        >
-          {nav.map((item) => {
-            const isActive =
-              loc.pathname === item.to ||
-              (item.to !== `/${mode}` && loc.pathname.startsWith(item.to));
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                aria-current={isActive ? "page" : undefined}
-                aria-label={`${item.label}${isActive ? ", current page" : ""}`}
-                className={cn(
-                  "tap-target group flex w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-sm border border-sidebar-border/50 px-1.5 py-2 text-center text-[10px] font-medium transition-colors sm:w-24 sm:text-xs lg:w-full lg:flex-row lg:justify-start lg:gap-2 lg:border-transparent lg:px-3 lg:text-left",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-foreground shadow-sm ring-1 ring-sidebar-foreground/20"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
-                )}
-              >
-                <span
+        <div className="px-3 pb-3 lg:px-2 lg:py-3">
+          <div className="mb-2 hidden px-1 text-[10px] font-mono uppercase tracking-wider text-sidebar-foreground/60 lg:block">
+            Modules
+          </div>
+          <nav
+            aria-label={`${mode} workspace modules`}
+            className="touch-scroll grid grid-flow-col auto-cols-[5rem] grid-rows-1 gap-1 overflow-x-auto sm:auto-cols-[5.75rem] lg:block lg:h-[calc(100vh-9rem)] lg:space-y-0.5 lg:overflow-y-auto lg:overflow-x-hidden"
+          >
+            {nav.map((item) => {
+              const isActive =
+                loc.pathname === item.to ||
+                (item.to !== `/${mode}` && loc.pathname.startsWith(item.to));
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  aria-current={isActive ? "page" : undefined}
+                  aria-label={`${item.label}${isActive ? ", current page" : ""}`}
+                  title={item.label}
                   className={cn(
-                    "grid size-7 place-items-center rounded-sm bg-sidebar-accent/70 lg:size-auto lg:bg-transparent",
-                    isActive && "bg-sidebar-foreground/10",
+                    "tap-target group flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-sm border border-sidebar-border/50 px-1.5 py-2 text-center text-[10px] font-medium leading-tight transition-colors lg:min-h-0 lg:w-full lg:flex-row lg:justify-start lg:gap-2 lg:border-transparent lg:px-3 lg:text-left lg:text-xs",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-foreground shadow-sm ring-1 ring-sidebar-foreground/20"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
                   )}
-                  aria-hidden="true"
                 >
-                  <Icon className="size-4 shrink-0 lg:size-3.5" />
-                </span>
-                <span className="line-clamp-2 leading-tight lg:line-clamp-none lg:whitespace-normal">
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
+                  <span
+                    className={cn(
+                      "grid size-9 place-items-center rounded-sm bg-sidebar-accent/70 transition-colors lg:size-auto lg:bg-transparent",
+                      isActive && "bg-sidebar-foreground/10 text-sidebar-foreground",
+                    )}
+                    aria-hidden="true"
+                  >
+                    <Icon className="size-4 shrink-0" />
+                  </span>
+                  <span className="line-clamp-2 max-w-full lg:line-clamp-none lg:whitespace-normal">
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
         {mode === "engineer" && (
           <div className="border-t border-sidebar-border p-3">
             <div className="mb-1 text-[10px] font-mono uppercase tracking-wider text-sidebar-foreground/60">

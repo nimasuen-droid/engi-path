@@ -50,13 +50,23 @@ import { generatePipelineDesignOptions } from "@/services/design/assistant";
 import { useProjects } from "@/state/projects";
 import {
   AlertTriangle,
+  BookOpen,
   CheckCircle2,
   ClipboardList,
+  FileCheck2,
+  Gauge,
   History,
   Lightbulb,
+  ListChecks,
   ShieldCheck,
   Wand2,
 } from "lucide-react";
+import type {
+  AssumptionConfidence,
+  ComponentLimit,
+  EngineeringAssumption,
+  RouteSection,
+} from "@/models";
 
 export const Route = createFileRoute("/engineer/calculations")({
   component: () => <RequireActiveProject>{(id) => <Calcs id={id} />}</RequireActiveProject>,
@@ -473,11 +483,11 @@ function Calcs({ id }: { id: string }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-20 xl:pb-0">
       <div
         role="tablist"
         aria-label="Calculation checks"
-        className="touch-scroll flex gap-1 overflow-x-auto border-b"
+        className="touch-scroll sticky top-[4.5rem] z-20 flex gap-1 overflow-x-auto border-b bg-background/95 backdrop-blur lg:static lg:bg-transparent"
       >
         {TABS.map((item) => (
           <button
@@ -497,8 +507,15 @@ function Calcs({ id }: { id: string }) {
         ))}
       </div>
 
+      <MobileCalculationSummary tab={tab} result={activeResult} projectName={p.name} />
+      <MobileCalculationDock />
+
       <div className="grid gap-4 xl:grid-cols-[minmax(280px,0.9fr)_minmax(360px,1.1fr)_minmax(280px,0.8fr)]">
-        <section aria-labelledby="validated-inputs-title" className="app-card space-y-3 p-4">
+        <section
+          id="calculation-inputs"
+          aria-labelledby="validated-inputs-title"
+          className="app-card scroll-mt-36 space-y-3 p-4"
+        >
           <div className="flex items-center justify-between">
             <h2
               id="validated-inputs-title"
@@ -507,7 +524,7 @@ function Calcs({ id }: { id: string }) {
               Validated Inputs
             </h2>
             <div className="flex items-center gap-2">
-              <DataConfidenceBadge confidence={projectConfidence} />
+              <DataConfidenceBadge confidence={projectConfidence} prefix="Confidence" />
               <LessonPopover
                 title="Calculation workflow"
                 why="The calculated result is only as reliable as the design basis feeding it."
@@ -517,29 +534,28 @@ function Calcs({ id }: { id: string }) {
               />
             </div>
           </div>
-          <Select
+          <CustomNumberSelect
             label="OD / NPS"
-            value={String(p.outsideDiameter_mm ?? selectedPipe.od_mm)}
-            on={(value) => upsert({ ...p, outsideDiameter_mm: Number(value) })}
-          >
-            {PIPE_SIZE_OPTIONS.map((size) => (
-              <option key={size.nps} value={size.od_mm}>
-                NPS {size.nps} - OD {size.od_mm} mm
-              </option>
-            ))}
-          </Select>
-          <Select
+            value={p.outsideDiameter_mm ?? selectedPipe.od_mm}
+            unit="mm"
+            customLabel="Custom OD / out-of-table value"
+            options={PIPE_SIZE_OPTIONS.map((size) => ({
+              value: size.od_mm,
+              label: `NPS ${size.nps} - OD ${size.od_mm} mm`,
+            }))}
+            on={(value) => upsert({ ...p, outsideDiameter_mm: value })}
+          />
+          <CustomNumberSelect
             label="Wall Thickness / Schedule"
-            value={String(p.wallThickness_mm ?? "")}
-            on={(value) => upsert({ ...p, wallThickness_mm: Number(value) })}
-          >
-            <option value="">Select wall</option>
-            {selectedPipe.commonSchedules.map((s) => (
-              <option key={s.schedule} value={s.wall_mm}>
-                {s.schedule} - {s.wall_mm} mm
-              </option>
-            ))}
-          </Select>
+            value={p.wallThickness_mm ?? selectedPipe.commonSchedules[0]?.wall_mm ?? 0}
+            unit="mm"
+            customLabel="Custom wall / mill value"
+            options={selectedPipe.commonSchedules.map((s) => ({
+              value: s.wall_mm,
+              label: `${s.schedule} - ${s.wall_mm} mm`,
+            }))}
+            on={(value) => upsert({ ...p, wallThickness_mm: value })}
+          />
           <DualUnitInput
             label="Design Pressure"
             kind="pressure"
@@ -552,17 +568,14 @@ function Calcs({ id }: { id: string }) {
             value={operatingPressure}
             on={setOperatingPressure}
           />
-          <Select
+          <CustomNumberSelect
             label="Fluid Vapor Pressure"
-            value={String(vaporPressure)}
-            on={(value) => setVaporPressure(Number(value))}
-          >
-            {VAPOR_PRESETS.map((preset) => (
-              <option key={preset.vp} value={preset.vp}>
-                {preset.label}
-              </option>
-            ))}
-          </Select>
+            value={vaporPressure}
+            unit="MPa"
+            customLabel="Custom vapor pressure"
+            options={VAPOR_PRESETS.map((preset) => ({ value: preset.vp, label: preset.label }))}
+            on={setVaporPressure}
+          />
           <DualUnitInput
             label="Surge Allowance"
             kind="pressure"
@@ -575,22 +588,14 @@ function Calcs({ id }: { id: string }) {
             value={p.corrosionAllowance_mm}
             on={(n) => upsert({ ...p, corrosionAllowance_mm: n })}
           />
-          <Select
-            label="Material SMYS"
-            value={selectedMaterial.grade}
-            on={(value) => {
-              const next = MATERIAL_OPTIONS.find((material) => material.grade === value);
-              if (!next) return;
-              setSmys(next.smys_MPa);
-              void upsert({ ...p, materialGrade: next.grade });
+          <CustomMaterialSelect
+            grade={p.materialGrade}
+            smys={smys}
+            on={(grade, nextSmys) => {
+              setSmys(nextSmys);
+              void upsert({ ...p, materialGrade: grade });
             }}
-          >
-            {MATERIAL_OPTIONS.map((m) => (
-              <option key={m.grade} value={m.grade}>
-                {m.grade} - {m.smys_MPa} MPa
-              </option>
-            ))}
-          </Select>
+          />
           <Select
             label="Class Location / Design Factor"
             value={String(p.classLocation ?? 1)}
@@ -622,49 +627,50 @@ function Calcs({ id }: { id: string }) {
             on={setOffshoreService}
           />
           <div className="space-y-3 border-t border-border pt-2">
-            <Select label="Flow Q" value={String(Q)} on={(value) => setQ(Number(value))}>
-              {flowPresets.map((preset) => (
-                <option key={preset.q} value={preset.q}>
-                  {preset.label}
-                </option>
-              ))}
-            </Select>
-            <Select label="Target velocity" value={String(v)} on={(value) => setV(Number(value))}>
-              {velocityPresets.map((preset) => (
-                <option key={preset.v} value={preset.v}>
-                  {preset.label}
-                </option>
-              ))}
-            </Select>
-            <Select label="Density" value={String(rho)} on={(value) => setRho(Number(value))}>
-              {DENSITY_PRESETS.map((preset) => (
-                <option key={preset.rho} value={preset.rho}>
-                  {preset.label}
-                </option>
-              ))}
-            </Select>
-            <Select
+            <CustomNumberSelect
+              label="Flow Q"
+              value={Q}
+              unit="m3/s"
+              customLabel="Custom project throughput"
+              options={flowPresets.map((preset) => ({ value: preset.q, label: preset.label }))}
+              on={setQ}
+            />
+            <CustomNumberSelect
+              label="Target velocity"
+              value={v}
+              unit="m/s"
+              customLabel="Custom target velocity"
+              options={velocityPresets.map((preset) => ({ value: preset.v, label: preset.label }))}
+              on={setV}
+            />
+            <CustomNumberSelect
+              label="Density"
+              value={rho}
+              unit="kg/m3"
+              customLabel="Custom fluid density"
+              options={DENSITY_PRESETS.map((preset) => ({
+                value: preset.rho,
+                label: preset.label,
+              }))}
+              on={setRho}
+            />
+            <CustomNumberSelect
               label="API RP 14E C factor"
-              value={String(erosionC)}
-              on={(value) => setErosionC(Number(value))}
-            >
-              {EROSION_C_PRESETS.map((preset) => (
-                <option key={preset.c} value={preset.c}>
-                  {preset.label}
-                </option>
-              ))}
-            </Select>
-            <Select
+              value={erosionC}
+              customLabel="Custom C factor"
+              options={EROSION_C_PRESETS.map((preset) => ({
+                value: preset.c,
+                label: preset.label,
+              }))}
+              on={setErosionC}
+            />
+            <CustomNumberSelect
               label="Darcy friction factor"
-              value={String(f)}
-              on={(value) => setFD(Number(value))}
-            >
-              {FRICTION_PRESETS.map((preset) => (
-                <option key={preset.f} value={preset.f}>
-                  {preset.label}
-                </option>
-              ))}
-            </Select>
+              value={f}
+              customLabel="Custom friction factor"
+              options={FRICTION_PRESETS.map((preset) => ({ value: preset.f, label: preset.label }))}
+              on={setFD}
+            />
             <div className="rounded-sm border bg-muted/40 p-2 text-[11px] text-muted-foreground">
               Hydraulic check uses estimated ID {hydraulicId} mm. Service limits: velocity{" "}
               {hydraulicLimits.maxVelocity_ms} m/s, pressure drop {hydraulicLimits.maxDrop_MPaKm}{" "}
@@ -673,7 +679,13 @@ function Calcs({ id }: { id: string }) {
           </div>
         </section>
 
-        <div id="calculation-panel" role="tabpanel" aria-label={`${tab} calculation`} tabIndex={-1}>
+        <div
+          id="calculation-panel"
+          role="tabpanel"
+          aria-label={`${tab} calculation`}
+          tabIndex={-1}
+          className="scroll-mt-36"
+        >
           <EpcControlsPanel
             project={p}
             traceSheets={traceSheets}
@@ -793,7 +805,8 @@ function Calcs({ id }: { id: string }) {
         </div>
 
         <aside
-          className="app-card h-fit space-y-3 p-4 xl:sticky xl:top-24"
+          id="learning-panel"
+          className="app-card h-fit scroll-mt-36 space-y-3 p-4 xl:sticky xl:top-24"
           aria-label="Calculation guidance"
         >
           <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
@@ -845,6 +858,109 @@ function serviceHydraulicLimits(p: ReturnType<typeof useProjects>["projects"][nu
     return { lowVelocity_ms: 2, targetVelocity_ms: 3, maxVelocity_ms: 4, maxDrop_MPaKm: 0.25 };
   }
   return { lowVelocity_ms: 1.5, targetVelocity_ms: 2.5, maxVelocity_ms: 3, maxDrop_MPaKm: 0.2 };
+}
+
+function MobileCalculationSummary({
+  tab,
+  result,
+  projectName,
+}: {
+  tab: (typeof TABS)[number];
+  result: CalcResult | null;
+  projectName: string;
+}) {
+  const status = !result || result.pass === undefined ? "Review" : result.pass ? "Pass" : "Fail";
+  const tone =
+    status === "Pass"
+      ? "border-compliant/30 bg-compliant/10 text-compliant"
+      : status === "Fail"
+        ? "border-destructive/30 bg-destructive/10 text-destructive"
+        : "border-warning/30 bg-warning/10 text-warning";
+  return (
+    <section className="app-card space-y-3 p-3 xl:hidden" aria-label="Mobile calculation summary">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Active calculation
+          </div>
+          <div className="truncate text-sm font-semibold">{tab}</div>
+          <div className="truncate text-[11px] text-muted-foreground">{projectName}</div>
+        </div>
+        <span className={`shrink-0 rounded-sm border px-2 py-1 text-[10px] font-mono ${tone}`}>
+          {status}
+        </span>
+      </div>
+      {result && (
+        <div className="rounded-sm bg-muted p-2 font-mono text-lg leading-tight">
+          {result.value} <span className="text-xs text-muted-foreground">{result.unit}</span>
+        </div>
+      )}
+      <div className="grid grid-cols-4 gap-2 text-center text-xs">
+        <a
+          className="tap-target flex flex-col items-center justify-center gap-1 rounded-sm border px-2 py-2 font-medium text-foreground"
+          href="/engineer/calculations#calculation-inputs"
+          aria-label="Jump to calculation inputs"
+        >
+          <ListChecks className="size-4" aria-hidden="true" />
+          <span>Inputs</span>
+        </a>
+        <a
+          className="tap-target flex flex-col items-center justify-center gap-1 rounded-sm border px-2 py-2 font-medium text-foreground"
+          href="/engineer/calculations#epc-controls"
+          aria-label="Jump to EPC calculation controls"
+        >
+          <FileCheck2 className="size-4" aria-hidden="true" />
+          <span>EPC</span>
+        </a>
+        <a
+          className="tap-target flex flex-col items-center justify-center gap-1 rounded-sm border px-2 py-2 font-medium text-foreground"
+          href="/engineer/calculations#calculation-panel"
+          aria-label="Jump to calculation result"
+        >
+          <Gauge className="size-4" aria-hidden="true" />
+          <span>Result</span>
+        </a>
+        <a
+          className="tap-target flex flex-col items-center justify-center gap-1 rounded-sm border px-2 py-2 font-medium text-foreground"
+          href="/engineer/calculations#learning-panel"
+          aria-label="Jump to learning guidance"
+        >
+          <BookOpen className="size-4" aria-hidden="true" />
+          <span>Learn</span>
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function MobileCalculationDock() {
+  const links = [
+    { href: "/engineer/calculations#calculation-inputs", label: "Inputs", icon: ListChecks },
+    { href: "/engineer/calculations#epc-controls", label: "EPC", icon: FileCheck2 },
+    { href: "/engineer/calculations#calculation-panel", label: "Result", icon: Gauge },
+    { href: "/engineer/calculations#learning-panel", label: "Learn", icon: BookOpen },
+  ];
+
+  return (
+    <nav
+      aria-label="Mobile calculation shortcuts"
+      className="fixed inset-x-3 bottom-3 z-40 rounded-sm border bg-card/95 p-1 shadow-lg backdrop-blur xl:hidden"
+      style={{ paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))" }}
+    >
+      <div className="grid grid-cols-4 gap-1">
+        {links.map(({ href, label, icon: Icon }) => (
+          <a
+            key={href}
+            href={href}
+            className="tap-target flex flex-col items-center justify-center gap-0.5 rounded-sm px-2 py-1.5 text-[10px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:text-foreground"
+          >
+            <Icon className="size-4" aria-hidden="true" />
+            <span>{label}</span>
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
 }
 
 function defaultDensityForProject(p: ReturnType<typeof useProjects>["projects"][number]) {
@@ -1161,9 +1277,125 @@ function EpcControlsPanel({
   const selectedEdition = project.codeEdition
     ? `${project.codeEdition.designCode}|${project.codeEdition.edition}`
     : "";
+  const now = () => new Date().toISOString();
+
+  function mergeAssumptionDefaults() {
+    onUpdate({
+      ...project,
+      assumptionsRegister: mergeById(assumptions, defaultAssumptions(project)),
+    });
+  }
+
+  function mergeRouteDefaults() {
+    onUpdate({
+      ...project,
+      routeSections: mergeById(routeSections, defaultRouteSections(project)),
+    });
+  }
+
+  function mergeComponentDefaults() {
+    onUpdate({
+      ...project,
+      componentLimits: mergeById(componentLimits, defaultComponentLimits(project)),
+    });
+  }
+
+  function updateAssumption(id: string, patch: Partial<EngineeringAssumption>) {
+    onUpdate({
+      ...project,
+      assumptionsRegister: assumptions.map((item) =>
+        item.id === id ? { ...item, ...patch, updatedAt: now() } : item,
+      ),
+    });
+  }
+
+  function addAssumption() {
+    onUpdate({
+      ...project,
+      assumptionsRegister: [
+        ...assumptions,
+        {
+          id: `assumption-${crypto.randomUUID()}`,
+          assumption: "New project assumption",
+          source: "Project input",
+          confidence: "assumed",
+          owner: project.engineer || "Responsible engineer",
+          status: "open",
+          createdAt: now(),
+        },
+      ],
+    });
+  }
+
+  function removeAssumption(id: string) {
+    onUpdate({ ...project, assumptionsRegister: assumptions.filter((item) => item.id !== id) });
+  }
+
+  function updateRouteSection(id: string, patch: Partial<RouteSection>) {
+    onUpdate({
+      ...project,
+      routeSections: routeSections.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    });
+  }
+
+  function addRouteSection() {
+    onUpdate({
+      ...project,
+      routeSections: [
+        ...routeSections,
+        {
+          id: `route-${crypto.randomUUID()}`,
+          name: "New route section",
+          length_km: 0,
+          elevationChange_m: 0,
+          classLocation: project.classLocation ?? 1,
+          designPressure_MPa: project.designPressure_MPa,
+          notes: "Define route basis and source.",
+        },
+      ],
+    });
+  }
+
+  function removeRouteSection(id: string) {
+    onUpdate({ ...project, routeSections: routeSections.filter((item) => item.id !== id) });
+  }
+
+  function updateComponentLimit(id: string, patch: Partial<ComponentLimit>) {
+    onUpdate({
+      ...project,
+      componentLimits: componentLimits.map((item) =>
+        item.id === id ? { ...item, ...patch } : item,
+      ),
+    });
+  }
+
+  function addComponentLimit() {
+    onUpdate({
+      ...project,
+      componentLimits: [
+        ...componentLimits,
+        {
+          id: `limit-${crypto.randomUUID()}`,
+          tag: "NEW-COMPONENT",
+          type: "other",
+          rating_MPa: project.designPressure_MPa,
+          temperature_C: project.designTemperature_C,
+          notes: "Define component rating source and pressure-temperature basis.",
+        },
+      ],
+    });
+  }
+
+  function removeComponentLimit(id: string) {
+    onUpdate({ ...project, componentLimits: componentLimits.filter((item) => item.id !== id) });
+  }
 
   return (
-    <section aria-labelledby="epc-controls-title" className="app-card mb-4 space-y-3 p-4">
+    <section
+      id="epc-controls"
+      aria-labelledby="epc-controls-title"
+      className="app-card mb-4 scroll-mt-36 space-y-3 p-4"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -1175,6 +1407,10 @@ function EpcControlsPanel({
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             Adds the controls expected in a formal calculation pack: code edition, unit basis, route
             sections, limiting components, trace sheets, revision history, and issue checks.
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-warning">
+            Code edition is recorded for traceability. Detailed clause-by-clause edition logic is
+            not implemented; final issue still requires governing-code verification.
           </p>
         </div>
         <span
@@ -1243,27 +1479,27 @@ function EpcControlsPanel({
       <div className="grid gap-2 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => onUpdate({ ...project, assumptionsRegister: defaultAssumptions(project) })}
+          onClick={mergeAssumptionDefaults}
           className="tap-target flex items-center justify-center gap-2 rounded-sm border px-3 py-2 text-xs font-medium hover:bg-muted"
         >
           <ShieldCheck className="size-3.5" aria-hidden="true" />
-          Build Assumptions Register
+          Merge Assumptions Defaults
         </button>
         <button
           type="button"
-          onClick={() => onUpdate({ ...project, routeSections: defaultRouteSections(project) })}
+          onClick={mergeRouteDefaults}
           className="tap-target flex items-center justify-center gap-2 rounded-sm border px-3 py-2 text-xs font-medium hover:bg-muted"
         >
           <ShieldCheck className="size-3.5" aria-hidden="true" />
-          Build Route Sections
+          Merge Route Defaults
         </button>
         <button
           type="button"
-          onClick={() => onUpdate({ ...project, componentLimits: defaultComponentLimits(project) })}
+          onClick={mergeComponentDefaults}
           className="tap-target flex items-center justify-center gap-2 rounded-sm border px-3 py-2 text-xs font-medium hover:bg-muted"
         >
           <ShieldCheck className="size-3.5" aria-hidden="true" />
-          Build Component Limits
+          Merge Component Defaults
         </button>
         <button
           type="button"
@@ -1275,22 +1511,104 @@ function EpcControlsPanel({
         </button>
       </div>
 
+      <details className="rounded-sm border border-primary/20 bg-primary/5 p-3 xl:hidden">
+        <summary className="cursor-pointer text-xs font-medium">
+          Mobile note: what to complete before report issue
+        </summary>
+        <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+          <li>Freeze code edition and unit basis.</li>
+          <li>Close or assign assumptions.</li>
+          <li>Confirm route sections and weakest component ratings.</li>
+          <li>Save a calculation revision after changes.</li>
+        </ul>
+      </details>
+
       <details className="rounded-sm border bg-background p-3">
         <summary className="cursor-pointer text-xs font-medium">
           Engineering Assumptions Register
         </summary>
         <div className="mt-3 grid gap-2">
-          {(assumptions.length ? assumptions : defaultAssumptions(project)).map((item) => (
-            <div key={item.id} className="rounded-sm border p-2 text-xs">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="font-medium">{item.assumption}</div>
-                <DataConfidenceBadge confidence={item.confidence} />
-              </div>
-              <div className="mt-1 text-muted-foreground">
-                Source: {item.source} | Owner: {item.owner} | Status: {item.status}
-              </div>
+          {assumptions.length === 0 ? (
+            <div className="rounded-sm border border-warning/30 bg-warning/10 p-2 text-xs text-muted-foreground">
+              No saved assumptions. Merge defaults or add project-specific assumptions before issue.
             </div>
-          ))}
+          ) : (
+            assumptions.map((item) => (
+              <div key={item.id} className="rounded-sm border p-3 text-xs">
+                <div className="grid gap-2">
+                  <label>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      Assumption
+                    </span>
+                    <textarea
+                      value={item.assumption}
+                      onChange={(event) =>
+                        updateAssumption(item.id, { assumption: event.target.value })
+                      }
+                      className="mt-0.5 min-h-20 w-full rounded-sm border bg-background px-2 py-2"
+                    />
+                  </label>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <TextField
+                      label="Source"
+                      value={item.source}
+                      on={(value) => updateAssumption(item.id, { source: value })}
+                    />
+                    <TextField
+                      label="Owner"
+                      value={item.owner}
+                      on={(value) => updateAssumption(item.id, { owner: value })}
+                    />
+                    <Select
+                      label="Confidence"
+                      value={item.confidence}
+                      on={(value) =>
+                        updateAssumption(item.id, {
+                          confidence: value as AssumptionConfidence,
+                        })
+                      }
+                    >
+                      <option value="confirmed">Confirmed</option>
+                      <option value="assumed">Assumed</option>
+                      <option value="estimated">Estimated</option>
+                      <option value="placeholder">Sample dataset</option>
+                    </Select>
+                    <Select
+                      label="Status"
+                      value={item.status}
+                      on={(value) =>
+                        updateAssumption(item.id, {
+                          status: value as EngineeringAssumption["status"],
+                        })
+                      }
+                    >
+                      <option value="open">Open</option>
+                      <option value="pending">Pending</option>
+                      <option value="closed">Closed</option>
+                      <option value="superseded">Superseded</option>
+                    </Select>
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <DataConfidenceBadge confidence={item.confidence} />
+                  <button
+                    type="button"
+                    onClick={() => removeAssumption(item.id)}
+                    className="tap-target rounded-sm border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/5"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+          <button
+            type="button"
+            onClick={addAssumption}
+            className="tap-target rounded-sm border px-3 py-2 text-xs font-medium hover:bg-muted"
+          >
+            Add assumption
+          </button>
         </div>
       </details>
 
@@ -1303,32 +1621,147 @@ function EpcControlsPanel({
             <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               Route sections
             </div>
-            {(routeSections.length ? routeSections : defaultRouteSections(project)).map(
-              (section) => (
-                <div key={section.id} className="rounded-sm border p-2 text-xs">
-                  <div className="font-medium">{section.name}</div>
-                  <div className="mt-1 text-muted-foreground">
-                    {section.length_km} km | Class {section.classLocation ?? "-"} | DP{" "}
-                    {section.designPressure_MPa ?? project.designPressure_MPa} MPa
+            {routeSections.length === 0 ? (
+              <div className="rounded-sm border border-warning/30 bg-warning/10 p-2 text-xs text-muted-foreground">
+                No saved route sections.
+              </div>
+            ) : (
+              routeSections.map((section) => (
+                <div key={section.id} className="rounded-sm border p-3 text-xs">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <TextField
+                      label="Section name"
+                      value={section.name}
+                      on={(value) => updateRouteSection(section.id, { name: value })}
+                    />
+                    <Select
+                      label="Class location"
+                      value={String(section.classLocation ?? project.classLocation ?? 1)}
+                      on={(value) =>
+                        updateRouteSection(section.id, {
+                          classLocation: Number(value) as 1 | 2 | 3 | 4,
+                        })
+                      }
+                    >
+                      <option value="1">Class 1</option>
+                      <option value="2">Class 2</option>
+                      <option value="3">Class 3</option>
+                      <option value="4">Class 4</option>
+                    </Select>
+                    <Sm
+                      label="Length (km)"
+                      value={section.length_km}
+                      step={0.01}
+                      on={(value) => updateRouteSection(section.id, { length_km: value })}
+                    />
+                    <Sm
+                      label="Elevation change (m)"
+                      value={section.elevationChange_m}
+                      step={1}
+                      on={(value) => updateRouteSection(section.id, { elevationChange_m: value })}
+                    />
+                    <Sm
+                      label="Design pressure (MPa)"
+                      value={section.designPressure_MPa ?? project.designPressure_MPa}
+                      step={0.01}
+                      on={(value) => updateRouteSection(section.id, { designPressure_MPa: value })}
+                    />
+                    <TextField
+                      label="Basis / notes"
+                      value={section.notes ?? ""}
+                      on={(value) => updateRouteSection(section.id, { notes: value })}
+                    />
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => removeRouteSection(section.id)}
+                    className="tap-target mt-2 rounded-sm border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/5"
+                  >
+                    Remove section
+                  </button>
                 </div>
-              ),
+              ))
             )}
+            <button
+              type="button"
+              onClick={addRouteSection}
+              className="tap-target rounded-sm border px-3 py-2 text-xs font-medium hover:bg-muted"
+            >
+              Add route section
+            </button>
           </div>
           <div className="space-y-2">
             <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
               Component limits
             </div>
-            {(componentLimits.length ? componentLimits : defaultComponentLimits(project)).map(
-              (limit) => (
-                <div key={limit.id} className="rounded-sm border p-2 text-xs">
-                  <div className="font-medium">{limit.tag}</div>
-                  <div className="mt-1 text-muted-foreground">
-                    {limit.type} | rating {limit.rating_MPa} MPa
+            {componentLimits.length === 0 ? (
+              <div className="rounded-sm border border-warning/30 bg-warning/10 p-2 text-xs text-muted-foreground">
+                No saved component limits.
+              </div>
+            ) : (
+              componentLimits.map((limit) => (
+                <div key={limit.id} className="rounded-sm border p-3 text-xs">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <TextField
+                      label="Tag"
+                      value={limit.tag}
+                      on={(value) => updateComponentLimit(limit.id, { tag: value })}
+                    />
+                    <Select
+                      label="Component type"
+                      value={limit.type}
+                      on={(value) =>
+                        updateComponentLimit(limit.id, {
+                          type: value as ComponentLimit["type"],
+                        })
+                      }
+                    >
+                      <option value="pipe">Pipe</option>
+                      <option value="valve">Valve</option>
+                      <option value="flange">Flange</option>
+                      <option value="fitting">Fitting</option>
+                      <option value="launcher">Launcher</option>
+                      <option value="receiver">Receiver</option>
+                      <option value="instrument">Instrument</option>
+                      <option value="other">Other</option>
+                    </Select>
+                    <Sm
+                      label="Rating (MPa)"
+                      value={limit.rating_MPa}
+                      step={0.01}
+                      on={(value) => updateComponentLimit(limit.id, { rating_MPa: value })}
+                    />
+                    <Sm
+                      label="Temperature (C)"
+                      value={limit.temperature_C ?? project.designTemperature_C}
+                      step={1}
+                      on={(value) => updateComponentLimit(limit.id, { temperature_C: value })}
+                    />
+                    <div className="sm:col-span-2">
+                      <TextField
+                        label="Rating source / notes"
+                        value={limit.notes ?? ""}
+                        on={(value) => updateComponentLimit(limit.id, { notes: value })}
+                      />
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => removeComponentLimit(limit.id)}
+                    className="tap-target mt-2 rounded-sm border px-3 py-1.5 text-xs text-destructive hover:bg-destructive/5"
+                  >
+                    Remove component
+                  </button>
                 </div>
-              ),
+              ))
             )}
+            <button
+              type="button"
+              onClick={addComponentLimit}
+              className="tap-target rounded-sm border px-3 py-2 text-xs font-medium hover:bg-muted"
+            >
+              Add component limit
+            </button>
           </div>
         </div>
       </details>
@@ -2078,7 +2511,7 @@ function DualUnitInput({
       <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <div className="mt-0.5 grid grid-cols-2 gap-2">
+      <div className="mt-0.5 grid gap-2 sm:grid-cols-2">
         <label className="relative">
           <span className="sr-only">
             {label} in {primaryUnit}
@@ -2147,6 +2580,185 @@ function Sm({
   );
 }
 
+function TextField({
+  label,
+  value,
+  on,
+}: {
+  label: string;
+  value: string;
+  on: (value: string) => void;
+}) {
+  return (
+    <label className="block text-xs">
+      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => on(event.target.value)}
+        className="mt-0.5 w-full rounded-sm border bg-background px-2 py-2"
+      />
+    </label>
+  );
+}
+
+function CustomMaterialSelect({
+  grade,
+  smys,
+  on,
+}: {
+  grade: string;
+  smys: number;
+  on: (grade: string, smys: number) => void;
+}) {
+  const matched = MATERIAL_OPTIONS.some((material) => material.grade === grade);
+  const [customMode, setCustomMode] = useState(!matched);
+  const showCustom = customMode || !matched;
+
+  return (
+    <div className="block text-xs">
+      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+        Material SMYS
+      </span>
+      <div className="mt-0.5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,0.55fr)]">
+        <select
+          aria-label="Material SMYS"
+          value={showCustom ? "__custom__" : grade}
+          onChange={(event) => {
+            if (event.target.value === "__custom__") {
+              setCustomMode(true);
+              return;
+            }
+            const next = MATERIAL_OPTIONS.find((material) => material.grade === event.target.value);
+            if (!next) return;
+            setCustomMode(false);
+            on(next.grade, next.smys_MPa);
+          }}
+          className="w-full rounded-sm border bg-background px-2 py-2 font-mono"
+        >
+          {MATERIAL_OPTIONS.map((material) => (
+            <option key={material.grade} value={material.grade}>
+              {material.grade} - {material.smys_MPa} MPa
+            </option>
+          ))}
+          <option value="__custom__">Custom value / project material</option>
+        </select>
+        {showCustom && (
+          <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-2">
+            <label className="relative">
+              <span className="sr-only">Custom material grade</span>
+              <input
+                aria-label="Custom material grade"
+                type="text"
+                value={grade}
+                onChange={(event) => on(event.target.value, smys)}
+                placeholder="Grade"
+                className="w-full rounded-sm border bg-background px-2 py-2 font-mono"
+              />
+            </label>
+            <label className="relative">
+              <span className="sr-only">Custom material SMYS in MPa</span>
+              <input
+                aria-label="Custom material SMYS in MPa"
+                type="number"
+                value={smys}
+                onChange={(event) => on(grade || "Custom material", Number(event.target.value))}
+                className="w-full rounded-sm border bg-background px-2 py-2 pr-9 font-mono"
+              />
+              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                MPa
+              </span>
+            </label>
+          </div>
+        )}
+      </div>
+      {showCustom && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Custom materials are treated as project-defined. Confirm specification, toughness,
+          welding, sour-service, and procurement basis before issue.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function CustomNumberSelect({
+  label,
+  value,
+  options,
+  on,
+  unit,
+  customLabel = "Custom value",
+}: {
+  label: string;
+  value: number;
+  options: Array<{ value: number; label: string }>;
+  on: (value: number) => void;
+  unit?: string;
+  customLabel?: string;
+}) {
+  const matched = options.some((option) => nearlyEqual(option.value, value));
+  const [customMode, setCustomMode] = useState(!matched);
+  const showCustom = customMode || !matched;
+
+  return (
+    <div className="block text-xs">
+      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      <div className="mt-0.5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(8rem,0.45fr)]">
+        <select
+          aria-label={label}
+          value={showCustom ? "__custom__" : String(value)}
+          onChange={(event) => {
+            if (event.target.value === "__custom__") {
+              setCustomMode(true);
+              return;
+            }
+            setCustomMode(false);
+            on(Number(event.target.value));
+          }}
+          className="w-full rounded-sm border bg-background px-2 py-2 font-mono"
+        >
+          {options.map((option) => (
+            <option key={`${label}-${option.value}`} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          <option value="__custom__">{customLabel}</option>
+        </select>
+        {showCustom && (
+          <label className="relative">
+            <span className="sr-only">
+              {label} custom value{unit ? ` in ${unit}` : ""}
+            </span>
+            <input
+              aria-label={`${label} custom value${unit ? ` in ${unit}` : ""}`}
+              type="number"
+              value={Number.isFinite(value) ? value : 0}
+              onChange={(event) => on(Number(event.target.value))}
+              className="w-full rounded-sm border bg-background px-2 py-2 pr-12 font-mono"
+            />
+            {unit && (
+              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                {unit}
+              </span>
+            )}
+          </label>
+        )}
+      </div>
+      {showCustom && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Custom value selected. Use project data or vendor/mill data, then document the source in
+          the assumptions register.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Select({
   label,
   value,
@@ -2172,6 +2784,15 @@ function Select({
       </select>
     </label>
   );
+}
+
+function nearlyEqual(a: number, b: number) {
+  return Math.abs(a - b) < 0.0001;
+}
+
+function mergeById<T extends { id: string }>(current: T[], defaults: T[]) {
+  const existing = new Set(current.map((item) => item.id));
+  return [...current, ...defaults.filter((item) => !existing.has(item.id))];
 }
 
 function Empty({ msg }: { msg: string }) {
